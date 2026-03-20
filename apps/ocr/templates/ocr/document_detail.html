@@ -6,57 +6,66 @@
 <div class="w-full max-w-6xl mx-auto animate-fade-in-up">
     
     <!-- Meta Header -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-6">
         <div>
-            <a href="{% url 'document_list' %}" class="text-slate-500 hover:text-white transition-colors text-[10px] font-bold tracking-[0.2em] uppercase flex items-center gap-2 mb-4">
-                <i class="ph-bold ph-arrow-left"></i> Return to Stack
+            <a href="{% url 'document_list' %}" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors text-sm font-medium flex items-center gap-2 mb-4 duration-300">
+                <i class="ph-bold ph-arrow-left"></i> Back to Documents
             </a>
-            <h1 class="text-2xl md:text-3xl font-display font-medium text-white tracking-tight flex items-center gap-3">
-                <span class="text-slate-600 italic">Source /</span> {{ document.original_filename }}
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-tight flex items-center gap-3 transition-colors duration-300">
+                {{ document.original_filename }}
             </h1>
             <div class="flex items-center gap-4 mt-3">
                 <div class="flex items-center gap-2">
-                    <span class="w-1.5 h-1.5 rounded-full {% if document.status == 'done' %}bg-emerald-500{% elif document.status == 'failed' %}bg-rose-500{% else %}bg-blue-500 animate-pulse{% endif %}"></span>
-                    <span class="text-[10px] font-bold tracking-[0.2em] uppercase {% if document.status == 'done' %}text-emerald-400{% elif document.status == 'failed' %}text-rose-400{% else %}text-blue-400{% endif %}">
-                        {{ document.status }}
-                    </span>
+                    {% if document.status == 'done' %}
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800/50 transition-colors duration-300">
+                            <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Completed
+                        </span>
+                    {% elif document.status == 'failed' %}
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/50 transition-colors duration-300">
+                            <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Failed
+                        </span>
+                    {% else %}
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/50 transition-colors duration-300">
+                            <i class="ph-bold ph-spinner-gap animate-spin"></i> Processing
+                        </span>
+                    {% endif %}
                 </div>
-                <span class="text-slate-700 text-[10px] font-bold tracking-[0.2em] uppercase">{{ document.uploaded_at|date:"Y.m.d / H:i" }}</span>
+                <span class="text-gray-500 dark:text-gray-400 text-sm font-medium transition-colors duration-300">{{ document.uploaded_at|date:"M j, Y, g:i a" }}</span>
             </div>
         </div>
         
         <div class="flex flex-wrap gap-3">
             <form id="delete-form" action="{% url 'document_delete' document.pk %}" method="post" class="inline-block">
                 {% csrf_token %}
-                <button type="button" onclick="openDeleteModal()" class="bg-white/5 hover:bg-rose-500/10 text-slate-400 hover:text-rose-400 border border-white/5 hover:border-rose-500/20 text-[10px] font-bold tracking-widest uppercase py-2.5 px-5 rounded-lg transition-all flex items-center gap-2">
+                <button type="button" onclick="openDeleteModal()" class="bg-white dark:bg-gray-900 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-500 border border-gray-200 dark:border-gray-800 hover:border-red-200 dark:hover:border-red-800/50 text-sm font-medium py-2 px-4 rounded-lg transition-all shadow-sm flex items-center gap-2">
                     <i class="ph-bold ph-trash"></i>
-                    <span>Purge</span>
+                    <span>Delete</span>
                 </button>
             </form>
             
             {% if document.result and document.result.extracted_text %}
-                <button id="copy-btn" class="bg-white/5 hover:bg-white/10 text-slate-300 border border-white/5 text-[10px] font-bold tracking-widest uppercase py-2.5 px-5 rounded-lg transition-all flex items-center gap-2">
+                <button id="copy-btn" class="bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-800 text-sm font-medium py-2 px-4 rounded-lg transition-all shadow-sm flex items-center gap-2">
                     <i class="ph-bold ph-copy"></i>
                     <span id="copy-text">Copy</span>
                 </button>
                 
                 <div class="relative group">
-                    <button class="bg-primary-500 hover:bg-primary-600 text-white text-[10px] font-bold tracking-widest uppercase py-2.5 px-6 rounded-lg transition-all flex items-center gap-2">
+                    <button class="btn-primary bg-gray-900 text-white hover:bg-black dark:bg-white dark:text-black dark:hover:bg-gray-100 text-sm font-medium py-2 px-5 rounded-lg transition-all shadow-sm flex items-center gap-2">
                         <i class="ph-bold ph-export"></i>
                         <span>Export</span>
-                        <i class="ph-bold ph-caret-down text-[8px] ml-1 transition-transform group-hover:rotate-180"></i>
+                        <i class="ph-bold ph-caret-down text-[10px] ml-1 transition-transform group-hover:rotate-180"></i>
                     </button>
                     <!-- Dropdown Menu -->
-                    <div class="absolute right-0 top-full mt-2 w-48 glass-panel rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top translate-y-1 group-hover:translate-y-0 z-50 overflow-hidden">
+                    <div class="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-floating dark:shadow-dark-card border border-gray-100 dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top scale-95 group-hover:scale-100 z-50 overflow-hidden">
                         <div class="py-1">
-                            <a href="{% url 'download_text' document.pk %}?format=txt" class="flex items-center gap-3 px-4 py-2.5 text-[10px] font-bold tracking-widest uppercase text-slate-400 hover:bg-white/5 hover:text-white transition-colors">
-                                <i class="ph-fill ph-file-text text-base"></i> Plain Text
+                            <a href="{% url 'download_text' document.pk %}?format=txt" class="flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors">
+                                <i class="ph-fill ph-file-text text-lg text-gray-400 dark:text-gray-500"></i> Plain Text
                             </a>
-                            <a href="{% url 'download_text' document.pk %}?format=docx" class="flex items-center gap-3 px-4 py-2.5 text-[10px] font-bold tracking-widest uppercase text-slate-400 hover:bg-white/5 hover:text-white transition-colors">
-                                <i class="ph-fill ph-file-doc text-base text-primary-500"></i> Word Doc
+                            <a href="{% url 'download_text' document.pk %}?format=docx" class="flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                                <i class="ph-fill ph-file-doc text-lg text-blue-500"></i> Word Doc
                             </a>
-                            <a href="{% url 'download_text' document.pk %}?format=xlsx" class="flex items-center gap-3 px-4 py-2.5 text-[10px] font-bold tracking-widest uppercase text-slate-400 hover:bg-white/5 hover:text-white transition-colors">
-                                <i class="ph-fill ph-file-xls text-base text-emerald-500"></i> Excel Sheet
+                            <a href="{% url 'download_text' document.pk %}?format=xlsx" class="flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-green-600 dark:hover:text-green-400 transition-colors">
+                                <i class="ph-fill ph-file-xls text-lg text-green-500"></i> Excel Sheet
                             </a>
                         </div>
                     </div>
@@ -70,37 +79,37 @@
         
         <!-- Extracted Text Column -->
         <div class="lg:col-span-8">
-            <div class="glass-panel rounded-2xl flex flex-col h-[650px] overflow-hidden">
-                <div class="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-white/[0.01]">
-                    <div class="flex items-center gap-2">
-                        <div class="w-2 h-2 rounded-full bg-white/10"></div>
-                        <span class="text-[10px] font-bold tracking-[0.2em] uppercase text-slate-500">Extraction Data</span>
+            <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm dark:shadow-dark-card border border-gray-200 dark:border-gray-800 flex flex-col h-[650px] overflow-hidden transition-colors duration-300">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 transition-colors duration-300">
+                    <div class="flex items-center gap-2.5">
+                        <i class="ph-fill ph-text-align-left text-gray-400 dark:text-gray-500"></i>
+                        <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">Extracted Text</span>
                     </div>
                     {% if document.result %}
-                    <span class="text-[10px] font-bold tracking-widest text-slate-600 uppercase">{{ document.result.extracted_text|length }} Characters</span>
+                    <span class="text-xs font-medium text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md transition-colors duration-300">{{ document.result.extracted_text|length }} Characters</span>
                     {% endif %}
                 </div>
                 
-                <div class="flex-grow p-8 overflow-y-auto font-mono text-sm leading-relaxed text-slate-400 selection:bg-primary-500/20 relative">
+                <div class="flex-grow p-6 md:p-8 overflow-y-auto font-mono text-sm leading-relaxed text-gray-700 dark:text-gray-300 selection:bg-blue-100 dark:selection:bg-blue-900/50 relative transition-colors duration-300">
                     {% if document.result and document.result.extracted_text %}
                         <pre id="extracted-text-content" class="whitespace-pre-wrap outline-none">{{ document.result.extracted_text }}</pre>
                     {% elif document.status == 'processing' %}
-                        <div class="absolute inset-0 flex flex-col items-center justify-center bg-black/20">
-                            <i class="ph ph-spinner-gap text-3xl text-primary-500 animate-spin mb-4"></i>
-                            <p class="text-[10px] font-bold tracking-[0.2em] uppercase text-slate-500">Processing Stream...</p>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm transition-colors duration-300">
+                            <i class="ph-bold ph-spinner-gap text-3xl text-primary-500 animate-spin mb-4"></i>
+                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Processing document...</p>
                         </div>
                         <script>
                             setTimeout(() => window.location.reload(), 3000);
                         </script>
                     {% elif document.status == 'failed' %}
-                        <div class="absolute inset-0 flex flex-col items-center justify-center text-rose-500/50">
-                            <i class="ph ph-warning-circle text-4xl mb-4"></i>
-                            <p class="text-[10px] font-bold tracking-[0.2em] uppercase text-rose-500">Extraction Fault detected</p>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center text-red-500/80 dark:text-red-500/60 transition-colors duration-300">
+                            <i class="ph-fill ph-warning-circle text-5xl mb-4"></i>
+                            <p class="text-sm font-semibold text-red-600 dark:text-red-400">Extraction Failed</p>
                         </div>
                     {% else %}
-                        <div class="absolute inset-0 flex flex-col items-center justify-center text-slate-700">
-                            <i class="ph ph-mask-sad text-4xl mb-4"></i>
-                            <p class="text-[10px] font-bold tracking-[0.2em] uppercase">No Data Recovered</p>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 dark:text-gray-600 transition-colors duration-300">
+                            <i class="ph-fill ph-file-dashed text-5xl mb-4 text-gray-300 dark:text-gray-700"></i>
+                            <p class="text-sm font-medium">No Data Available</p>
                         </div>
                     {% endif %}
                 </div>
@@ -108,50 +117,56 @@
         </div>
 
         <!-- Sidebar / Meta -->
-        <div class="lg:col-span-4 flex flex-col gap-8">
+        <div class="lg:col-span-4 flex flex-col gap-6">
             
             <!-- Source Preview -->
-            <div class="glass-panel rounded-2xl overflow-hidden p-1 flex flex-col">
-                <div class="px-5 py-3 border-b border-white/5">
-                    <span class="text-[10px] font-bold tracking-[0.2em] uppercase text-slate-500">Source Preview</span>
+            <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm dark:shadow-dark-card border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col transition-colors duration-300">
+                <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 flex items-center gap-2 transition-colors duration-300">
+                    <i class="ph-fill ph-image text-gray-400 dark:text-gray-500"></i>
+                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">Source Preview</span>
                 </div>
-                <div class="aspect-[4/5] bg-black/40 flex items-center justify-center overflow-hidden rounded-xl m-1 border border-white/5 relative group">
+                <div class="aspect-[4/5] bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden relative group transition-colors duration-300">
                     {% if document.is_image %}
-                        <img src="{{ document.file.url }}" alt="Preview" class="max-w-full max-h-full object-contain transition-transform duration-700 group-hover:scale-105">
+                        <img src="{{ document.file.url }}" alt="Preview" class="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-105">
                     {% else %}
-                        <div class="flex flex-col items-center justify-center text-slate-600">
-                            <i class="ph ph-file-pdf text-5xl mb-3"></i>
-                            <p class="text-[10px] font-bold tracking-widest uppercase">PDF Format</p>
-                            <a href="{{ document.file.url }}" target="_blank" class="mt-4 text-primary-500 hover:text-white text-[10px] font-bold tracking-widest uppercase underline underline-offset-4 transition-colors">
-                                Open Source
+                        <div class="flex flex-col items-center justify-center text-gray-500 dark:text-gray-400">
+                            <i class="ph-fill ph-file-pdf text-5xl mb-3 text-red-400 dark:text-red-500"></i>
+                            <p class="text-sm font-medium">PDF Document</p>
+                            <a href="{{ document.file.url }}" target="_blank" class="mt-4 text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 text-xs font-semibold uppercase tracking-wide transition-colors">
+                                View Original
                             </a>
                         </div>
                     {% endif %}
                     
                     <!-- Hover overlay -->
-                    <a href="{{ document.file.url }}" target="_blank" class="absolute inset-0 bg-primary-500/0 group-hover:bg-primary-500/5 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-                        <div class="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-2xl transform translate-y-4 group-hover:translate-y-0 transition-all duration-500">
+                    {% if document.is_image %}
+                    <a href="{{ document.file.url }}" target="_blank" class="absolute inset-0 bg-gray-900/0 group-hover:bg-gray-900/10 dark:bg-black/0 dark:group-hover:bg-black/40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                        <div class="w-10 h-10 rounded-full bg-white dark:bg-gray-800 text-gray-900 dark:text-white flex items-center justify-center shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 border border-transparent dark:border-gray-700">
                             <i class="ph-bold ph-arrows-out"></i>
                         </div>
                     </a>
+                    {% endif %}
                 </div>
             </div>
 
             <!-- Specs -->
-            <div class="glass-panel rounded-2xl p-6">
-                <span class="text-[10px] font-bold tracking-[0.2em] uppercase text-slate-500 block mb-6">Source Metadata</span>
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center text-[10px] font-bold tracking-widest border-b border-white/5 pb-4">
-                        <span class="text-slate-600 uppercase">File Spec</span>
-                        <span class="text-slate-300 uppercase">{{ document.file_extension|slice:"1:" }} / {{ document.file.size|filesizeformat }}</span>
+            <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm dark:shadow-dark-card border border-gray-200 dark:border-gray-800 p-6 transition-colors duration-300">
+                <div class="flex items-center gap-2 mb-4">
+                    <i class="ph-fill ph-info text-gray-400 dark:text-gray-500"></i>
+                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">Metadata</span>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center text-sm border-b border-gray-100 dark:border-gray-800 pb-3 transition-colors duration-300">
+                        <span class="text-gray-500 dark:text-gray-400">File Size</span>
+                        <span class="font-medium text-gray-900 dark:text-gray-100">{{ document.file.size|filesizeformat }}</span>
                     </div>
-                    <div class="flex justify-between items-center text-[10px] font-bold tracking-widest border-b border-white/5 pb-4">
-                        <span class="text-slate-600 uppercase">Mime</span>
-                        <span class="text-slate-300 uppercase">{% if document.is_pdf %}application/pdf{% else %}image/source{% endif %}</span>
+                    <div class="flex justify-between items-center text-sm border-b border-gray-100 dark:border-gray-800 pb-3 transition-colors duration-300">
+                        <span class="text-gray-500 dark:text-gray-400">Extension</span>
+                        <span class="font-medium text-gray-900 dark:text-gray-100">{{ document.file_extension|slice:"1:"|upper }}</span>
                     </div>
-                    <div class="flex justify-between items-center text-[10px] font-bold tracking-widest">
-                        <span class="text-slate-600 uppercase">ID Hash</span>
-                        <span class="text-slate-300 uppercase">#{{ document.pk|stringformat:"04d" }}</span>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-500 dark:text-gray-400">Document ID</span>
+                        <span class="font-mono text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded text-xs transition-colors duration-300">#{{ document.pk|stringformat:"04d" }}</span>
                     </div>
                 </div>
             </div>
@@ -161,24 +176,24 @@
 
     <!-- Deletion Flow Modal -->
     <div id="delete-modal" class="fixed inset-0 z-[100] hidden items-center justify-center px-4">
-        <div class="absolute inset-0 bg-dark-950/90 backdrop-blur-md transition-opacity opacity-0" id="delete-modal-backdrop" onclick="closeDeleteModal()"></div>
+        <div class="absolute inset-0 bg-gray-900/40 dark:bg-black/60 backdrop-blur-sm transition-opacity opacity-0" id="delete-modal-backdrop" onclick="closeDeleteModal()"></div>
         
-        <div class="glass-panel rounded-2xl p-10 max-w-sm w-full relative z-10 transform scale-95 opacity-0 transition-all duration-500 text-center" id="delete-modal-content">
-            <div class="w-12 h-12 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mb-6 mx-auto">
-                <i class="ph-bold ph-shield-warning text-2xl text-rose-500"></i>
+        <div class="bg-white dark:bg-gray-900 rounded-2xl p-8 max-w-sm w-full relative z-10 transform scale-95 opacity-0 transition-all duration-300 text-center shadow-floating dark:shadow-dark-card border border-gray-100 dark:border-gray-800" id="delete-modal-content">
+            <div class="w-14 h-14 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-5 mx-auto transition-colors duration-300">
+                <i class="ph-fill ph-warning text-3xl text-red-600 dark:text-red-500"></i>
             </div>
             
-            <h3 class="text-xl font-display font-medium text-white mb-2 tracking-tight">System Purge</h3>
-            <p class="text-slate-500 text-xs font-medium mb-10 leading-relaxed uppercase tracking-widest">
-                Are you sure you want to permanently delete this source? This action is irrecoverable.
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2 tracking-tight transition-colors duration-300">Delete Document</h3>
+            <p class="text-gray-500 dark:text-gray-400 text-sm mb-8 leading-relaxed transition-colors duration-300">
+                Are you sure you want to permanently delete "{{ document.original_filename }}"? This action cannot be undone.
             </p>
             
-            <div class="flex flex-col gap-3">
-                <button onclick="submitDelete()" class="w-full bg-rose-500 hover:bg-rose-600 text-white text-[10px] font-bold tracking-[0.2em] uppercase py-4 rounded-lg transition-all">
-                    Confirm Purge
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button onclick="closeDeleteModal()" class="w-full sm:w-1/2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium text-sm py-2.5 rounded-lg transition-colors shadow-sm">
+                    Cancel
                 </button>
-                <button onclick="closeDeleteModal()" class="w-full text-slate-500 hover:text-white text-[10px] font-bold tracking-[0.2em] uppercase py-4 transition-colors">
-                    Abort
+                <button onclick="submitDelete()" class="w-full sm:w-1/2 bg-red-600 dark:bg-red-500 hover:bg-red-700 dark:hover:bg-red-600 text-white font-medium text-sm py-2.5 rounded-lg transition-colors shadow-sm">
+                    Delete
                 </button>
             </div>
         </div>
@@ -200,21 +215,20 @@
                     const textSpan = copyBtn.querySelector('span');
                     const originalText = textSpan.textContent;
                     
-                    textSpan.textContent = 'Copied';
-                    copyBtn.classList.remove('text-slate-300');
-                    copyBtn.classList.add('text-emerald-400', 'border-emerald-500/20', 'bg-emerald-500/5');
+                    textSpan.textContent = 'Copied!';
+                    copyBtn.classList.add('bg-green-50', 'dark:bg-green-900/30', 'text-green-700', 'dark:text-green-400', 'border-green-200', 'dark:border-green-800');
+                    copyBtn.classList.remove('text-gray-700', 'dark:text-gray-300', 'bg-white', 'dark:bg-gray-900', 'hover:bg-gray-50', 'dark:hover:bg-gray-800');
                     
                     setTimeout(function() {
                         textSpan.textContent = originalText;
-                        copyBtn.classList.add('text-slate-300');
-                        copyBtn.classList.remove('text-emerald-400', 'border-emerald-500/20', 'bg-emerald-500/5');
+                        copyBtn.classList.remove('bg-green-50', 'dark:bg-green-900/30', 'text-green-700', 'dark:text-green-400', 'border-green-200', 'dark:border-green-800');
+                        copyBtn.classList.add('text-gray-700', 'dark:text-gray-300', 'bg-white', 'dark:bg-gray-900', 'hover:bg-gray-50', 'dark:hover:bg-gray-800');
                     }, 2000);
                 });
             });
         }
     });
 
-    // Modal Logic
     const deleteModal = document.getElementById('delete-modal');
     const deleteModalBackdrop = document.getElementById('delete-modal-backdrop');
     const deleteModalContent = document.getElementById('delete-modal-content');
@@ -236,7 +250,7 @@
         setTimeout(() => {
             deleteModal.classList.add('hidden');
             deleteModal.classList.remove('flex');
-        }, 500);
+        }, 300);
     };
 
     window.submitDelete = function() {
