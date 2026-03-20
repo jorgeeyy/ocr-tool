@@ -131,3 +131,50 @@ def download_text(request, pk):
         response = HttpResponse(content, content_type='text/plain')
         response['Content-Disposition'] = f'attachment; filename="{base_filename}.txt"'
         return response
+
+def convert_pdf_to_docx(request, pk):
+    """Convert an uploaded PDF directly to an editable DOCX using pdf2docx."""
+    document = get_object_or_404(Document, pk=pk)
+    
+    if not document.is_pdf:
+        messages.error(request, "Only PDF files can be converted direct to Word.")
+        return redirect('document_detail', pk=pk)
+
+    try:
+        import os
+        import tempfile
+        from pdf2docx import Converter
+
+        # Use a temporary file for the DOCX output
+        with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as temp_out:
+            output_path = temp_out.name
+            
+        # Convert using pdf2docx
+        cv = Converter(document.file.path)
+        cv.convert(output_path, start=0, end=None)
+        cv.close()
+
+        with open(output_path, 'rb') as f:
+            docx_data = f.read()
+            
+        # Cleanup
+        os.remove(output_path)
+        
+        # Strip original extension and append _converted.docx
+        base_filename = document.original_filename.rsplit('.', 1)[0]
+        
+        response = HttpResponse(
+            docx_data,
+            content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        )
+        response['Content-Disposition'] = f'attachment; filename="{base_filename}_converted.docx"'
+        return response
+        
+    except ImportError:
+        logger.error("pdf2docx is not installed.")
+        messages.error(request, "PDF conversion service is currently unavailable.")
+        return redirect('document_detail', pk=pk)
+    except Exception as e:
+        logger.error(f"PDF to DOCX conversion failed: {e}")
+        messages.error(request, "An error occurred during PDF conversion.")
+        return redirect('document_detail', pk=pk)
