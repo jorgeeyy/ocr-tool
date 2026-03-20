@@ -1,0 +1,7 @@
+venv
+db.sqlite3
+media
+test_**
+generate_**
+django+ocr_tool_specification.md
+install**

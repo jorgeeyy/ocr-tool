@@ -1,0 +1,113 @@
+{% extends "ocr/base.html" %}
+
+{% block title %}Recent Documents - NexusOCR{% endblock %}
+
+{% block content %}
+<div class="w-full max-w-6xl mx-auto animate-fade-in-up">
+    
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+        <div>
+            <h1 class="text-2xl font-display font-medium text-white mb-1">Document <span class="text-slate-500">Stack</span></h1>
+            <p class="text-slate-500 text-[10px] font-bold tracking-widest uppercase">System Index / Records Overview</p>
+        </div>
+        
+        <a href="{% url 'upload_document' %}" class="bg-primary-500 hover:bg-primary-600 text-white text-[10px] font-bold tracking-widest uppercase py-3 px-6 rounded-lg transition-all flex items-center gap-2">
+            <i class="ph-bold ph-plus"></i>
+            <span>Add Source</span>
+        </a>
+    </div>
+
+    <div class="glass-panel rounded-xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-white/[0.02] border-b border-white/5">
+                        <th class="px-6 py-4 text-[10px] font-bold tracking-[0.2em] uppercase text-slate-500">Document</th>
+                        <th class="px-6 py-4 text-[10px] font-bold tracking-[0.2em] uppercase text-slate-500">Format</th>
+                        <th class="px-6 py-4 text-[10px] font-bold tracking-[0.2em] uppercase text-slate-500">Status</th>
+                        <th class="px-6 py-4 text-[10px] font-bold tracking-[0.2em] uppercase text-slate-500">Recorded</th>
+                        <th class="px-6 py-4 text-[10px] font-bold tracking-[0.2em] uppercase text-slate-400 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                    {% for doc in documents %}
+                    <tr class="hover:bg-white/[0.01] transition-colors group">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 group-hover:border-primary-500/50 group-hover:text-white transition-all">
+                                    {% if doc.file_type == 'PDF' %}
+                                        <i class="ph ph-file-pdf text-xl"></i>
+                                    {% else %}
+                                        <i class="ph ph-image text-xl"></i>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-white group-hover:text-primary-400 transition-colors">{{ doc.original_filename }}</p>
+                                    <p class="text-[10px] text-slate-500 font-bold tracking-tight uppercase">{{ doc.file.size|filesizeformat }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="text-[10px] font-bold tracking-widest uppercase text-slate-400">{{ doc.file_type }}</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full {% if doc.status == 'done' %}bg-emerald-500{% elif doc.status == 'failed' %}bg-rose-500{% elif doc.status == 'processing' %}bg-blue-500 animate-pulse{% else %}bg-slate-500{% endif %}"></span>
+                                <span class="text-[10px] font-bold tracking-widest uppercase {% if doc.status == 'done' %}text-emerald-400{% elif doc.status == 'failed' %}text-rose-400{% elif doc.status == 'processing' %}text-blue-400{% else %}text-slate-400{% endif %}">
+                                    {{ doc.status }}
+                                </span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-[10px] font-bold tracking-widest uppercase text-slate-500">
+                            {{ doc.uploaded_at|date:"Y.m.d / H:i" }}
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <a href="{% url 'document_detail' doc.pk %}" class="inline-flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase text-primary-500 hover:text-white transition-colors">
+                                <span>Inspect</span>
+                                <i class="ph-bold ph-arrow-right"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-24 text-center">
+                            <div class="flex flex-col items-center">
+                                <div class="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-4 text-slate-600">
+                                    <i class="ph ph-files text-3xl"></i>
+                                </div>
+                                <h3 class="text-lg font-display font-medium text-white mb-2">No data recovered.</h3>
+                                <p class="text-slate-500 text-sm mb-8">The system stack is currently empty.</p>
+                                <a href="{% url 'upload_document' %}" class="bg-white text-black text-[10px] font-bold tracking-[0.2em] uppercase py-3 px-8 rounded-lg hover:bg-slate-200 transition-all">
+                                    Initialize Stack
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="mt-8 flex justify-center gap-2">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}" class="w-10 h-10 rounded-lg glass-panel flex items-center justify-center text-slate-400 hover:text-white hover:border-primary-500/50 transition-all">
+                <i class="ph ph-caret-left font-bold"></i>
+            </a>
+        {% endif %}
+        
+        <div class="h-10 px-4 rounded-lg glass-panel flex items-center justify-center text-[10px] font-bold tracking-widest text-white uppercase">
+            PAGE {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+        </div>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="w-10 h-10 rounded-lg glass-panel flex items-center justify-center text-slate-400 hover:text-white hover:border-primary-500/50 transition-all">
+                <i class="ph ph-caret-right font-bold"></i>
+            </a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
