@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 def index_redirect(request):
     """Redirect root to document list or upload."""
-    return redirect('upload')
+    return redirect('upload_document')
 
 
 class DocumentUploadView(CreateView):
