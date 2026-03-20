@@ -1,0 +1,3 @@
+INFO 2026-03-20 11:03:34,200 autoreload 17332 13472 Watching for file changes with StatReloader
+WARNING 2026-03-20 11:06:16,878 log 17332 15824 Not Found: /documents/4/
+WARNING 2026-03-20 11:06:16,881 log 17332 15824 "GET /documents/4/ HTTP/1.1" 404 3459
