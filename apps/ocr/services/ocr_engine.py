@@ -22,70 +22,79 @@ pytesseract.pytesseract.tesseract_cmd = settings.TESSERACT_CMD
 
 def extract_text_from_image(image: Image.Image) -> str:
     """
-    Extract text from a single PIL Image.
+    Extract text from a single PIL Image with basic formatting preservation.
     
-    Applies preprocessing, runs Tesseract, and cleans the output.
+    Using Tesseract's HOCR (HTML-based OCR) to preserve relative positions 
+    and potentially some font weight information.
     
     Args:
         image: PIL Image to process.
     
     Returns:
-        Cleaned extracted text.
+        HOCR (HTML) extracted text.
     """
     processed = preprocess_image(image)
-    raw_text = pytesseract.image_to_string(processed)
-    return clean_text(raw_text)
+    # Get HOCR output for basic layout preservation
+    hocr = pytesseract.image_to_pdf_or_hocr(processed, extension='hocr').decode('utf-8')
+    # Clean it up to keep it readable
+    return clean_text(hocr)
 
 
-def extract_text_from_pdf(file_path: str) -> str:
+def extract_high_fidelity_pdf(file_path: str) -> str:
     """
-    Extract text from a PDF by converting each page to an image.
+    Extract high-fidelity HTML from a PDF using PyMuPDF (fitz).
     
-    Uses pdf2image to convert pages, then runs OCR on each.
+    This preserves fonts, colors, and absolute positioning of text.
     
     Args:
-        file_path: Absolute path to the PDF file.
+        file_path: Absolute path to the PDF.
     
     Returns:
-        Combined cleaned text from all pages.
+        HTML content of the PDF.
+    """
+    try:
+        import fitz
+        doc = fitz.open(file_path)
+        html_out = []
+        for page in doc:
+            html_out.append(page.get_text("html"))
+        doc.close()
+        return clean_text("\n".join(html_out))
+    except Exception as e:
+        logger.error(f"High-fidelity PDF extraction failed: {e}")
+        return ""
+
+
+def extract_scanned_pdf(file_path: str) -> str:
+    """
+    Legacy fallback: Extract text from a scanned PDF via images and OCR.
     """
     try:
         from pdf2image import convert_from_path
-    except ImportError:
-        logger.error("pdf2image is not installed. Cannot process PDFs.")
-        raise RuntimeError("PDF processing requires the pdf2image package.")
-
-    try:
         images = convert_from_path(file_path, dpi=300, poppler_path=settings.POPPLER_PATH)
+        page_texts = []
+        for i, page_image in enumerate(images, start=1):
+            text = extract_text_from_image(page_image)
+            if text:
+                page_texts.append(text)
+        return "\n\n".join(page_texts)
     except Exception as e:
-        logger.error(f"Failed to convert PDF to images: {e}")
+        logger.error(f"Scanned PDF extraction failed: {e}")
         raise RuntimeError(f"Failed to convert PDF: {e}")
-
-    page_texts = []
-    for i, page_image in enumerate(images, start=1):
-        logger.info(f"Processing PDF page {i}/{len(images)}")
-        text = extract_text_from_image(page_image)
-        if text:
-            page_texts.append(f"--- Page {i} ---\n{text}")
-
-    return '\n\n'.join(page_texts)
 
 
 def process_document(document) -> str:
     """
-    Process a Document model instance and extract text.
+    Process a Document model instance and extract text with high fidelity.
     
-    Dispatches to the appropriate handler based on file type.
-    Updates the document status during processing.
+    Tries digital extraction first for PDFs, falling back to OCR if needed.
+    For images, uses HOCR for better layout preservation.
     
     Args:
         document: Document model instance.
     
     Returns:
-        Extracted text string.
-    
-    Raises:
-        RuntimeError: If processing fails.
+        High-fidelity HTML/Text string.
     """
     file_path = document.file.path
 
@@ -94,14 +103,20 @@ def process_document(document) -> str:
         document.save(update_fields=['status'])
 
         if document.is_pdf:
-            text = extract_text_from_pdf(file_path)
+            # 1. Try digital extraction first (fast and high fidelity)
+            text = extract_high_fidelity_pdf(file_path)
+            
+            # 2. If it's a scanned PDF (very small result), fallback to OCR
+            if len(text.strip()) < 100:
+                logger.info(f"PDF seems scanned, switching to OCR for {document.original_filename}")
+                text = extract_scanned_pdf(file_path)
+        
         elif document.is_image:
             image = Image.open(file_path)
             text = extract_text_from_image(image)
+        
         else:
-            raise ValueError(
-                f"Unsupported file type: {document.file_extension}"
-            )
+            raise ValueError(f"Unsupported file type: {document.file_extension}")
 
         document.status = 'done'
         document.save(update_fields=['status'])

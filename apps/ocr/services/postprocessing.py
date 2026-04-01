@@ -12,35 +12,37 @@ def clean_text(raw_text: str) -> str:
     """
     Clean and normalize raw OCR output text.
     
-    Steps:
-        1. Remove non-printable / noise characters
-        2. Normalize whitespace
-        3. Remove excessive blank lines
-        4. Strip leading/trailing whitespace
+    Relaxes character filtering to support Unicode and HTML,
+    but cleans up excessive whitespace and blank lines.
     
     Args:
-        raw_text: Raw text string from OCR engine.
+        raw_text: Raw text or HTML from OCR engine.
     
     Returns:
-        Cleaned text string.
+        Cleaned string.
     """
     if not raw_text:
         return ""
 
-    # Remove non-printable characters (keep newlines, tabs, and standard chars)
-    text = re.sub(r'[^\x20-\x7E\n\t\r]', '', raw_text)
+    # Relax filtering to support Unicode (common accents, etc.)
+    # We remove control characters but keep most printables + HTML tags
+    text = "".join(ch for ch in raw_text if ch.isprintable() or ch in "\n\t\r")
 
-    # Normalize multiple spaces to single space (preserve newlines)
+    # If it's HTML (contains tags), we use a lighter cleaning to avoid breaking structure
+    if '<' in text and '>' in text:
+        # Standardize newlines
+        text = text.replace("\r\n", "\n").replace("\r", "\n")
+        # Remove excessive empty lines only
+        text = re.sub(r'\n{4,}', '\n\n\n', text)
+        return text.strip()
+
+    # Standard plain text cleaning
+    # Normalize multiple spaces (preserve newlines)
     text = re.sub(r'[^\S\n]+', ' ', text)
-
-    # Remove excessive blank lines (more than 2 consecutive)
+    # Remove excessive blank lines
     text = re.sub(r'\n{3,}', '\n\n', text)
-
-    # Strip whitespace from each line
+    # Strip each line
     lines = [line.strip() for line in text.splitlines()]
     text = '\n'.join(lines)
-
-    # Remove leading/trailing whitespace
-    text = text.strip()
-
-    return text
+    
+    return text.strip()

@@ -139,16 +139,21 @@ def download_text(request, pk):
 
     elif file_format == 'xlsx':
         import io
+        import re
         from openpyxl import Workbook
         
         base_filename = document.original_filename.rsplit('.', 1)[0]
         
+        # Strip HTML tags
+        clean_content = re.sub(r'<[^>]+>', '', content)
+        clean_content = clean_content.replace('&nbsp;', ' ').replace('&lt;', '<').replace('&gt;', '>').replace('&amp;', '&')
+
         wb = Workbook()
         ws = wb.active
         ws.title = "OCR Results"
         
         # Write each line to a new row
-        for row_idx, line in enumerate(content.splitlines(), start=1):
+        for row_idx, line in enumerate(clean_content.splitlines(), start=1):
             ws.cell(row=row_idx, column=1, value=line)
             
         buffer = io.BytesIO()
@@ -164,7 +169,38 @@ def download_text(request, pk):
 
     else:
         # Default to txt
+        import re
         base_filename = document.original_filename.rsplit('.', 1)[0]
-        response = HttpResponse(content, content_type='text/plain')
+        # Strip HTML tags for plain text export
+        clean_content = re.sub(r'<[^>]+>', '', content)
+        # Decode common HTML entities
+        clean_content = clean_content.replace('&nbsp;', ' ').replace('&lt;', '<').replace('&gt;', '>').replace('&amp;', '&')
+        
+        response = HttpResponse(clean_content, content_type='text/plain')
         response['Content-Disposition'] = f'attachment; filename="{base_filename}_ocr.txt"'
         return response
+
+
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+import json
+
+@require_POST
+def update_document_text(request, pk):
+    """Update the extracted text for a document."""
+    document = get_object_or_404(Document, pk=pk)
+    
+    if not hasattr(document, 'result'):
+        return JsonResponse({'status': 'error', 'message': 'No OCR result found.'}, status=404)
+        
+    try:
+        data = json.loads(request.body)
+        new_text = data.get('text', '')
+        
+        document.result.extracted_text = new_text
+        document.result.save()
+        
+        return JsonResponse({'status': 'success'})
+    except Exception as e:
+        logger.error(f"Failed to update text: {e}")
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
